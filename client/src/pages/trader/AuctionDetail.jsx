@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api';
 
 const AuctionDetail = () => {
   const { id } = useParams();
@@ -9,6 +10,8 @@ const AuctionDetail = () => {
   const [bids, setBids] = useState([]);
   const [bidAmount, setBidAmount] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     fetchDetail();
@@ -16,29 +19,52 @@ const AuctionDetail = () => {
 
   const fetchDetail = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/trader/auctions/${id}`);
+      setLoading(true);
+      const res = await axios.get(API_ENDPOINTS.getAuction(id));
       setAuction(res.data.auction);
       setBids(res.data.bids);
     } catch (error) {
-      console.error(error);
+      console.error('Error fetching auction details:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleBid = async (e) => {
     e.preventDefault();
+    setError('');
+    
+    if (!bidAmount || Number(bidAmount) < minBid) {
+      setError(`Minimum bid is ₹${minBid}`);
+      return;
+    }
+
     try {
-      await axios.post('http://localhost:5000/api/trader/bid', {
+      setSubmitting(true);
+      await axios.post(API_ENDPOINTS.placeBid, {
         auctionId: id,
         amount: Number(bidAmount)
       });
       setBidAmount('');
-      setError('');
       fetchDetail(); // Refresh data
       alert('Bid placed successfully!');
     } catch (err) {
       setError(err.response?.data?.message || 'Bid failed');
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading auction details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!auction) return <div>Loading...</div>;
 
@@ -112,8 +138,12 @@ const AuctionDetail = () => {
                     <p className="text-xs text-gray-500 mt-1">Minimum bid: ₹{minBid}</p>
                 </div>
                 {error && <div className="text-red-500 text-sm">{error}</div>}
-                <button type="submit" className="w-full py-3 bg-secondary text-white font-bold rounded-lg hover:bg-amber-700 transition shadow-md">
-                    Place Bid
+                <button 
+                  type="submit" 
+                  disabled={submitting || auction.status !== 'active'}
+                  className="w-full py-3 bg-secondary text-white font-bold rounded-lg hover:bg-amber-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'Placing Bid...' : auction.status !== 'active' ? 'Auction Closed' : 'Place Bid'}
                 </button>
             </form>
         </div>

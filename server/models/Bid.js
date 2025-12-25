@@ -7,4 +7,8 @@ const bidSchema = new mongoose.Schema({
   time: { type: Date, default: Date.now }
 }, { timestamps: true });
 
+// Indexes for performance
+bidSchema.index({ auction: 1, amount: -1 });
+bidSchema.index({ trader: 1, time: -1 });
+
 module.exports = mongoose.model('Bid', bidSchema);

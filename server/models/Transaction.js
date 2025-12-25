@@ -9,4 +9,10 @@ const transactionSchema = new mongoose.Schema({
   transactionDate: { type: Date, default: Date.now }
 }, { timestamps: true });
 
+// Indexes for performance
+transactionSchema.index({ auction: 1 });
+transactionSchema.index({ farmer: 1, transactionDate: -1 });
+transactionSchema.index({ trader: 1, transactionDate: -1 });
+transactionSchema.index({ paymentStatus: 1 });
+
 module.exports = mongoose.model('Transaction', transactionSchema);

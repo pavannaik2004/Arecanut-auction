@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 
 const AuthContext = createContext();
 
@@ -23,7 +24,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+    const res = await axios.post(API_ENDPOINTS.login, { email, password });
     localStorage.setItem('token', res.data.token);
     localStorage.setItem('user', JSON.stringify(res.data.user));
     axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
@@ -32,7 +33,26 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (userData) => {
-    await axios.post('http://localhost:5000/api/auth/register', userData);
+    // Clean up data - only send relevant fields based on role
+    const cleanData = {
+      name: userData.name,
+      email: userData.email,
+      password: userData.password,
+      role: userData.role
+    };
+    
+    // Add role-specific fields
+    if (userData.role === 'farmer' && userData.farmLocation) {
+      cleanData.farmLocation = userData.farmLocation;
+    }
+    if (userData.role === 'trader' && userData.apmcLicense) {
+      cleanData.apmcLicense = userData.apmcLicense;
+    }
+    if (userData.phone) {
+      cleanData.phone = userData.phone;
+    }
+    
+    await axios.post(API_ENDPOINTS.register, cleanData);
   };
 
   const logout = () => {
@@ -44,7 +64,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ user, login, register, logout, loading }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

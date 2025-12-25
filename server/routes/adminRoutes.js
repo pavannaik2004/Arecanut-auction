@@ -14,8 +14,20 @@ const adminCheck = (req, res, next) => {
 router.use(authMiddleware);
 router.use(adminCheck);
 
+// User management
 router.get('/pending-users', adminController.getPendingUsers);
-router.put('/approve/:id', adminController.approveUser);
-router.delete('/reject/:id', adminController.rejectUser);
+router.put('/approve-user/:id', adminController.approveUser);
+router.delete('/reject-user/:id', adminController.rejectUser);
+
+// Auction management
+router.get('/all-auctions', adminController.getAllAuctions);
+router.get('/auctions/:id', adminController.getAuctionById);
+router.put('/terminate-auction/:id', adminController.terminateAuction);
+
+// Transaction management
+router.get('/transactions', adminController.getAllTransactions);
+
+// Dashboard stats
+router.get('/stats', adminController.getDashboardStats);
 
 module.exports = router;

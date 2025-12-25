@@ -18,4 +18,10 @@ const auctionSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
+// Indexes for performance
+auctionSchema.index({ status: 1, endTime: 1 });
+auctionSchema.index({ farmer: 1, createdAt: -1 });
+auctionSchema.index({ location: 1, variety: 1 });
+auctionSchema.index({ status: 1, createdAt: -1 });
+
 module.exports = mongoose.model('Auction', auctionSchema);

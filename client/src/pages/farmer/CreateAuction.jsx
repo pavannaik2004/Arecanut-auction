@@ -1,20 +1,28 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api';
 
 const CreateAuction = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     variety: '', quantity: '', qualityGrade: '', basePrice: '', location: '', endTime: '', image: ''
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    
     try {
-      await axios.post('http://localhost:5000/api/farmer/create-auction', formData);
+      setLoading(true);
+      await axios.post(API_ENDPOINTS.createAuction, formData);
       navigate('/farmer/dashboard');
     } catch (error) {
-      alert('Error creating auction');
+      setError(error.response?.data?.message || 'Error creating auction');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -112,9 +120,28 @@ const CreateAuction = () => {
           />
         </div>
 
+        {error && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+        )}
+
         <div className="flex justify-end space-x-4">
-          <button type="button" onClick={() => navigate('/farmer/dashboard')} className="px-6 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
-          <button type="submit" className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-green-800 font-bold">Create Auction</button>
+          <button 
+            type="button" 
+            onClick={() => navigate('/farmer/dashboard')} 
+            className="px-6 py-2 border rounded-lg hover:bg-gray-50"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-green-800 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading}
+          >
+            {loading ? 'Creating...' : 'Create Auction'}
+          </button>
         </div>
       </form>
     </div>

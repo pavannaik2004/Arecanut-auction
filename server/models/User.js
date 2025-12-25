@@ -25,4 +25,8 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
+// Indexes for performance
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ role: 1, isApproved: 1 });
+
 module.exports = mongoose.model('User', userSchema);
