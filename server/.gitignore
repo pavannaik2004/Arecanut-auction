@@ -38,3 +38,6 @@ build/
 # Temporary files
 *.tmp
 *.temp
+
+#docs
+docs
