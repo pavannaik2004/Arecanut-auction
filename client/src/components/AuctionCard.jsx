@@ -2,6 +2,17 @@ import { Calendar, MapPin, TrendingUp, Package, Award } from 'lucide-react';
 
 const AuctionCard = ({ auction, showActions = false, onAction }) => {
   const getAuctionStatusInfo = () => {
+    // Handle pending status first
+    if (auction.status === 'pending') {
+      return {
+        bgColor: 'bg-orange-50',
+        borderColor: 'border-orange-300',
+        badgeColor: 'bg-orange-200 text-orange-800',
+        badgeText: 'PENDING APPROVAL',
+        statusIcon: '🟠'
+      };
+    }
+
     if (auction.status === 'closed' || auction.status === 'completed') {
       return {
         bgColor: 'bg-gray-100',

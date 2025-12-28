@@ -1,5 +1,11 @@
 const cloudinary = require("cloudinary").v2;
 
+// Check if Cloudinary credentials are available
+if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+  console.error("❌ Cloudinary configuration missing! Please check your .env file.");
+  console.error("Required variables: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET");
+}
+
 // Configure Cloudinary with credentials from environment variables
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

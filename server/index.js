@@ -4,10 +4,15 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const rateLimit = require("express-rate-limit");
 const cron = require("node-cron");
+
+// Load environment variables FIRST before any other imports that need them
+dotenv.config();
+
+// Initialize Cloudinary configuration after env variables are loaded
+require("./config/cloudinary");
+
 const { checkAndCloseExpiredAuctions } = require("./services/auctionService");
 const { initializeCleanupJobs } = require("./jobs/imageCleanup");
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -65,6 +70,7 @@ const authRoutes = require("./routes/authRoutes");
 const farmerRoutes = require("./routes/farmerRoutes");
 const traderRoutes = require("./routes/traderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 // Rate limiting temporarily disabled for development
 // app.use('/api/auth/login', authLimiter);
@@ -72,6 +78,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/farmer", farmerRoutes);
 app.use("/api/trader", traderRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/payment", paymentRoutes);
 
 app.get("/", (req, res) => {
   res.send("Arecanut Auction API is running...");

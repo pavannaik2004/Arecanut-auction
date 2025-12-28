@@ -124,6 +124,84 @@ exports.terminateAuction = async (req, res) => {
   }
 };
 
+// Get Pending Auctions (for approval)
+exports.getPendingAuctions = async (req, res) => {
+  try {
+    const auctions = await Auction.find({ status: "pending" })
+      .populate("farmer", "name email farmLocation")
+      .sort({ createdAt: -1 });
+    res.json(auctions);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+// Approve Auction (Quality Assurance)
+exports.approveAuction = async (req, res) => {
+  try {
+    const auction = await Auction.findById(req.params.id);
+    if (!auction) return res.status(404).json({ message: "Auction not found" });
+
+    if (auction.status !== "pending") {
+      return res.status(400).json({ message: "Auction is not in pending status" });
+    }
+
+    auction.status = "active";
+    await auction.save();
+
+    res.json({ message: "Auction approved and is now live", auction });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+// Edit Auction (Admin can modify quality and base price before approval)
+exports.editAuction = async (req, res) => {
+  try {
+    const { qualityGrade, basePrice } = req.body;
+    const auction = await Auction.findById(req.params.id);
+    
+    if (!auction) return res.status(404).json({ message: "Auction not found" });
+
+    if (auction.status !== "pending") {
+      return res.status(400).json({ message: "Only pending auctions can be edited" });
+    }
+
+    // Update allowed fields
+    if (qualityGrade) auction.qualityGrade = qualityGrade;
+    if (basePrice) {
+      auction.basePrice = basePrice;
+      auction.currentHighestBid = basePrice; // Reset highest bid to new base price
+    }
+
+    await auction.save();
+    res.json({ message: "Auction updated successfully", auction });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+// Reject Auction
+exports.rejectAuction = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const auction = await Auction.findById(req.params.id);
+    
+    if (!auction) return res.status(404).json({ message: "Auction not found" });
+
+    if (auction.status !== "pending") {
+      return res.status(400).json({ message: "Auction is not in pending status" });
+    }
+
+    // You could either delete it or mark as rejected
+    await Auction.findByIdAndDelete(req.params.id);
+    
+    res.json({ message: "Auction rejected and removed", reason });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
 // Get Dashboard Statistics
 exports.getDashboardStats = async (req, res) => {
   try {
@@ -137,6 +215,7 @@ exports.getDashboardStats = async (req, res) => {
 
     const totalAuctions = await Auction.countDocuments();
     const activeAuctions = await Auction.countDocuments({ status: "active" });
+    const pendingAuctions = await Auction.countDocuments({ status: "pending" });
     const closedAuctions = await Auction.countDocuments({ status: "closed" });
     const completedAuctions = await Auction.countDocuments({
       status: "completed",
@@ -162,6 +241,7 @@ exports.getDashboardStats = async (req, res) => {
       auctions: {
         total: totalAuctions,
         active: activeAuctions,
+        pending: pendingAuctions,
         closed: closedAuctions,
         completed: completedAuctions,
       },
@@ -192,6 +272,26 @@ exports.cleanupOldImages = async (req, res) => {
       deleted: result.deleted,
       failed: result.failed,
     });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+// Get All Farmers
+exports.getAllFarmers = async (req, res) => {
+  try {
+    const farmers = await User.find({ role: "farmer" }).select('-password').sort({ createdAt: -1 });
+    res.json(farmers);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+// Get All Traders
+exports.getAllTraders = async (req, res) => {
+  try {
+    const traders = await User.find({ role: "trader" }).select('-password').sort({ createdAt: -1 });
+    res.json(traders);
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
   }

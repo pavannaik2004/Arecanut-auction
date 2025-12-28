@@ -57,6 +57,11 @@ exports.placeBid = async (req, res) => {
       return res.status(400).json({ message: 'Bid must be higher than current highest bid and base price' });
     }
 
+    // Check if bid is in increments of 10
+    if (amount % 10 !== 0) {
+      return res.status(400).json({ message: 'Bid amount must be in increments of 10' });
+    }
+
     // Create Bid
     const bid = new Bid({
       auction: auctionId,

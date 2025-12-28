@@ -8,6 +8,11 @@ const cloudinary = require("../config/cloudinary");
  */
 const uploadImage = async (fileBuffer, folder = "arecanut-auction") => {
   try {
+    // Verify Cloudinary configuration
+    if (!cloudinary.config().cloud_name || !cloudinary.config().api_key || !cloudinary.config().api_secret) {
+      throw new Error("Cloudinary configuration is missing. Please check your environment variables.");
+    }
+
     const result = await cloudinary.uploader.upload(fileBuffer, {
       folder: folder,
       resource_type: "auto",
@@ -23,6 +28,7 @@ const uploadImage = async (fileBuffer, folder = "arecanut-auction") => {
       publicId: result.public_id,
     };
   } catch (error) {
+    console.error("Cloudinary upload error:", error);
     throw new Error(`Image upload failed: ${error.message}`);
   }
 };

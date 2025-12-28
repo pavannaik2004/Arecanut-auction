@@ -38,11 +38,11 @@ exports.createAuction = async (req, res) => {
       endTime,
       image: imageUrl,
       imagePublicId: imagePublicId,
-      status: "active",
+      status: "pending", // Auctions require admin approval
     });
 
     await auction.save();
-    res.status(201).json({ message: "Auction created successfully", auction });
+    res.status(201).json({ message: "Auction created successfully. Pending admin approval.", auction });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
   }

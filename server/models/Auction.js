@@ -19,8 +19,8 @@ const auctionSchema = new mongoose.Schema(
     endTime: { type: Date, required: true },
     status: {
       type: String,
-      enum: ["active", "closed", "completed"],
-      default: "active",
+      enum: ["pending", "approved", "active", "closed", "completed"],
+      default: "pending",
     },
   },
   { timestamps: true }

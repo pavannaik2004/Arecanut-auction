@@ -60,60 +60,39 @@ const CreateAuction = () => {
     setError("");
   };
 
-  const uploadToCloudinary = async (file) => {
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
-    if (!cloudName || !uploadPreset) {
-      throw new Error("Cloudinary configuration missing");
-    }
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", uploadPreset);
-    formData.append("folder", "arecanut-auctions");
-
-    const response = await axios.post(
-      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-      formData
-    );
-
-    return {
-      url: response.data.secure_url,
-      publicId: response.data.public_id,
-    };
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
       setLoading(true);
-      let imageData = {};
+      
+      // Use FormData to upload image through server
+      const submitData = new FormData();
+      submitData.append("variety", formData.variety);
+      submitData.append("quantity", formData.quantity);
+      submitData.append("qualityGrade", formData.qualityGrade);
+      submitData.append("basePrice", formData.basePrice);
+      submitData.append("location", formData.location);
+      submitData.append("endTime", formData.endTime);
 
-      // Upload image to Cloudinary if file selected
+      // Add image file if selected
       if (imageFile) {
         setUploadingImage(true);
-        const uploadResult = await uploadToCloudinary(imageFile);
-        imageData = {
-          image: uploadResult.url,
-          imagePublicId: uploadResult.publicId,
-        };
-        setUploadingImage(false);
+        submitData.append("image", imageFile);
       }
-      // Use URL if provided
+      // Or use URL if provided
       else if (imageUrl) {
-        imageData = {
-          image: imageUrl,
-        };
+        submitData.append("image", imageUrl);
       }
 
-      await axios.post(API_ENDPOINTS.createAuction, {
-        ...formData,
-        ...imageData,
+      await axios.post(API_ENDPOINTS.createAuction, submitData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
+      setUploadingImage(false);
       navigate("/farmer/dashboard");
     } catch (error) {
       setError(

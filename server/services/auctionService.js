@@ -1,8 +1,9 @@
 const Auction = require('../models/Auction');
 const Bid = require('../models/Bid');
 const Transaction = require('../models/Transaction');
+const Payment = require('../models/Payment');
 
-// Close auction and create transaction
+// Close auction and create transaction + payment record
 async function closeAuction(auctionId) {
   try {
     const auction = await Auction.findById(auctionId);
@@ -31,10 +32,26 @@ async function closeAuction(auctionId) {
       
       await transaction.save();
       
+      // Create payment record for the winning trader
+      const existingPayment = await Payment.findOne({ auction: auctionId });
+      if (!existingPayment) {
+        const payment = new Payment({
+          auction: auctionId,
+          trader: winningBid.trader._id,
+          farmer: auction.farmer,
+          amount: winningBid.amount,
+          status: 'pending',
+          paymentMethod: 'upi', // Default method, trader can change when paying
+          transactionId: `TXN${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+        });
+        await payment.save();
+        console.log(`Payment record created for auction ${auctionId}`);
+      }
+      
       console.log(`Transaction created for auction ${auctionId}, winner: ${winningBid.trader.name}, amount: ${winningBid.amount}`);
       
-      // Update auction status to completed
-      auction.status = 'completed';
+      // Update auction status to closed (will be completed after payment)
+      auction.status = 'closed';
     } else {
       // No bids, just close
       auction.status = 'closed';

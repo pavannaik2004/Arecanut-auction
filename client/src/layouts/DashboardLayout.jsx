@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Gavel, LogOut, Package, UserCheck, PlusCircle } from 'lucide-react';
+import { LayoutDashboard, Gavel, LogOut, Package, UserCheck, PlusCircle, Users, CreditCard, ShieldCheck } from 'lucide-react';
 import clsx from 'clsx';
 
 const DashboardLayout = () => {
@@ -19,14 +19,21 @@ const DashboardLayout = () => {
     farmer: [
       { label: 'Dashboard', path: '/farmer/dashboard', icon: LayoutDashboard },
       { label: 'Create Auction', path: '/farmer/create-auction', icon: PlusCircle },
+      { label: 'My Payments', path: '/farmer/payments', icon: CreditCard },
     ],
     trader: [
       { label: 'Dashboard', path: '/trader/dashboard', icon: LayoutDashboard },
-      { label: 'Browse Auctions', path: '/trader/dashboard', icon: Gavel }, // Initially dashboard is browse
+      { label: 'Browse Auctions', path: '/trader/browse', icon: Gavel },
+      { label: 'My Bids', path: '/trader/my-bids', icon: Package },
+      { label: 'My Payments', path: '/trader/payments', icon: CreditCard },
     ],
     admin: [
       { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-      { label: 'Approvals', path: '/admin/dashboard', icon: UserCheck },
+      { label: 'Pending Approvals', path: '/admin/pending-approvals', icon: UserCheck },
+      { label: 'Pending Auctions', path: '/admin/pending-auctions', icon: ShieldCheck },
+      { label: 'All Farmers', path: '/admin/farmers', icon: Users },
+      { label: 'All Traders', path: '/admin/traders', icon: Users },
+      { label: 'All Payments', path: '/admin/payments', icon: CreditCard },
     ]
   };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
+import { CreditCard } from 'lucide-react';
 
 const AuctionDetail = () => {
   const { id } = useParams();
@@ -12,9 +13,14 @@ const AuctionDetail = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [payment, setPayment] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [paymentNotes, setPaymentNotes] = useState('');
 
   useEffect(() => {
     fetchDetail();
+    fetchPayment();
   }, [id]);
 
   const fetchDetail = async () => {
@@ -30,12 +36,50 @@ const AuctionDetail = () => {
     }
   };
 
+  const fetchPayment = async () => {
+    try {
+      const res = await axios.get(API_ENDPOINTS.paymentByAuction(id));
+      setPayment(res.data);
+    } catch (error) {
+      // Payment doesn't exist yet
+      setPayment(null);
+    }
+  };
+
+  const isWinner = () => {
+    if (!bids.length || !auction) return false;
+    const highestBid = bids[0];
+    return highestBid.trader?._id === JSON.parse(localStorage.getItem('user'))?._id;
+  };
+
+  const handleInitiatePayment = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(API_ENDPOINTS.createPayment, {
+        auctionId: id,
+        paymentMethod,
+        notes: paymentNotes
+      });
+      alert('Payment initiated successfully!');
+      setShowPaymentModal(false);
+      fetchPayment();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to initiate payment');
+    }
+  };
+
   const handleBid = async (e) => {
     e.preventDefault();
     setError('');
     
     if (!bidAmount || Number(bidAmount) < minBid) {
       setError(`Minimum bid is ₹${minBid}`);
+      return;
+    }
+
+    // Check if bid is in increments of 10
+    if (Number(bidAmount) % 10 !== 0) {
+      setError('Bid amount must be in increments of 10');
       return;
     }
 
@@ -120,7 +164,8 @@ const AuctionDetail = () => {
             <h3 className="text-gray-500 uppercase text-xs font-bold tracking-wider mb-1">Current Highest Bid</h3>
             <div className="text-4xl font-bold text-secondary mb-6">₹{auction.currentHighestBid || auction.basePrice}</div>
             
-            <form onSubmit={handleBid} className="space-y-4">
+            {auction.status === 'active' && (
+              <form onSubmit={handleBid} className="space-y-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Your Bid Amount</label>
                     <div className="relative">
@@ -128,6 +173,7 @@ const AuctionDetail = () => {
                          <input 
                             type="number" 
                             min={minBid}
+                            step="10"
                             className="w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-secondary focus:outline-none font-bold"
                             placeholder={`${minBid}`}
                             value={bidAmount}
@@ -135,17 +181,45 @@ const AuctionDetail = () => {
                             required
                          />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Minimum bid: ₹{minBid}</p>
+                    <p className="text-xs text-gray-500 mt-1">Minimum bid: ₹{minBid} (in increments of ₹10)</p>
                 </div>
                 {error && <div className="text-red-500 text-sm">{error}</div>}
                 <button 
                   type="submit" 
-                  disabled={submitting || auction.status !== 'active'}
+                  disabled={submitting}
                   className="w-full py-3 bg-secondary text-white font-bold rounded-lg hover:bg-amber-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {submitting ? 'Placing Bid...' : auction.status !== 'active' ? 'Auction Closed' : 'Place Bid'}
+                  {submitting ? 'Placing Bid...' : 'Place Bid'}
                 </button>
-            </form>
+              </form>
+            )}
+
+            {(auction.status === 'closed' || auction.status === 'completed') && isWinner() && !payment && (
+              <div className="space-y-3">
+                <div className="bg-green-100 text-green-800 p-3 rounded-lg text-center font-semibold">
+                  🎉 You won this auction!
+                </div>
+                <button
+                  onClick={() => setShowPaymentModal(true)}
+                  className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-green-900 transition"
+                >
+                  <CreditCard className="w-5 h-5 inline mr-2" />
+                  Initiate Payment
+                </button>
+              </div>
+            )}
+
+            {payment && (
+              <div className="bg-blue-100 text-blue-800 p-3 rounded-lg text-center">
+                Payment Status: <strong className="capitalize">{payment.status}</strong>
+              </div>
+            )}
+
+            {auction.status === 'closed' && !isWinner() && (
+              <div className="bg-gray-100 text-gray-700 p-3 rounded-lg text-center">
+                Auction Closed
+              </div>
+            )}
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -165,6 +239,62 @@ const AuctionDetail = () => {
              </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold text-primary mb-4">Initiate Payment</h2>
+            <form onSubmit={handleInitiatePayment} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none"
+                  required
+                >
+                  <option value="upi">UPI</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="card">Card</option>
+                  <option value="cash">Cash</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
+                <textarea
+                  value={paymentNotes}
+                  onChange={(e) => setPaymentNotes(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none"
+                  rows="3"
+                  placeholder="Any additional notes..."
+                />
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-600">Amount:</span>
+                  <span className="font-bold text-xl text-secondary">₹{auction.currentHighestBid}</span>
+                </div>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentModal(false)}
+                  className="flex-1 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2 bg-primary text-white rounded-lg hover:bg-green-900 transition"
+                >
+                  Confirm Payment
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
