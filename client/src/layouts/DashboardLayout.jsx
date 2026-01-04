@@ -44,7 +44,7 @@ const DashboardLayout = () => {
       {/* Sidebar */}
       <aside className={clsx("bg-primary text-white w-64 flex-shrink-0 transition-all duration-300", !isSidebarOpen && "-ml-64")}>
         <div className="p-6">
-          <h1 className="text-2xl font-heading font-bold">ArecaAuction</h1>
+          <h1 className="text-2xl font-heading font-bold text-white">ArecaAuction</h1>
           <p className="text-sm text-green-200 mt-1 capitalize">{user?.role} Portal</p>
         </div>
         <nav className="mt-6 px-4 space-y-2">
