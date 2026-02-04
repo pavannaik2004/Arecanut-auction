@@ -1,27 +1,80 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/database");
 
-const auctionSchema = new mongoose.Schema({
-  farmer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  variety: { type: String, required: true }, // e.g., Rashi, Idi, Chooru
-  quantity: { type: Number, required: true }, // in KGs
-  qualityGrade: { type: String, required: true },
-  basePrice: { type: Number, required: true },
-  currentHighestBid: { type: Number, default: 0 },
-  location: { type: String, required: true }, // APMC location
-  image: { type: String }, // URL or path
-  startTime: { type: Date, default: Date.now },
-  endTime: { type: Date, required: true },
-  status: { 
-    type: String, 
-    enum: ['active', 'closed', 'completed'], 
-    default: 'active' 
-  }
-}, { timestamps: true });
+const Auction = sequelize.define(
+  "Auction",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    farmerId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "Users",
+        key: "id",
+      },
+    },
+    variety: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    quantity: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+    },
+    qualityGrade: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    basePrice: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+    },
+    currentHighestBid: {
+      type: DataTypes.FLOAT,
+      defaultValue: 0,
+    },
+    location: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    image: {
+      type: DataTypes.TEXT("long"), // Support for large image URLs or Base64 data
+      allowNull: true,
+    },
+    startTime: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    endTime: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    status: {
+      type: DataTypes.ENUM("active", "closed", "completed"),
+      defaultValue: "active",
+    },
+  },
+  {
+    timestamps: true,
+    indexes: [
+      {
+        fields: ["status", "endTime"],
+      },
+      {
+        fields: ["farmerId", "createdAt"],
+      },
+      {
+        fields: ["location", "variety"],
+      },
+      {
+        fields: ["status", "createdAt"],
+      },
+    ],
+  },
+);
 
-// Indexes for performance
-auctionSchema.index({ status: 1, endTime: 1 });
-auctionSchema.index({ farmer: 1, createdAt: -1 });
-auctionSchema.index({ location: 1, variety: 1 });
-auctionSchema.index({ status: 1, createdAt: -1 });
-
-module.exports = mongoose.model('Auction', auctionSchema);
+module.exports = Auction;
