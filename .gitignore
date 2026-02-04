@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 
 # Environment variables - NEVER commit these!
 .env
@@ -44,6 +43,3 @@ build/
 # Testing
 coverage/
 .nyc_output/
-
-#docs
-docs
