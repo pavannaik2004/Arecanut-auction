@@ -1,32 +1,81 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const { DataTypes } = require("sequelize");
+const bcrypt = require("bcryptjs");
+const sequelize = require("../config/database");
 
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: { type: String, enum: ['farmer', 'trader', 'admin'], required: true },
-  phone: { type: String },
-  // Specific fields
-  farmLocation: { type: String }, // For Farmer
-  apmcLicense: { type: String },  // For Trader
-  isApproved: { type: Boolean, default: false } // Admin approval
-}, { timestamps: true });
+const User = sequelize.define(
+  "User",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true,
+      },
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    role: {
+      type: DataTypes.ENUM("farmer", "trader", "admin"),
+      allowNull: false,
+    },
+    phone: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    farmLocation: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    apmcLicense: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    isApproved: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+  },
+  {
+    timestamps: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ["email"],
+      },
+      {
+        fields: ["role", "isApproved"],
+      },
+    ],
+    hooks: {
+      beforeCreate: async (user) => {
+        if (user.password) {
+          user.password = await bcrypt.hash(user.password, 10);
+        }
+      },
+      beforeUpdate: async (user) => {
+        if (user.changed("password")) {
+          user.password = await bcrypt.hash(user.password, 10);
+        }
+      },
+    },
+  },
+);
 
-// Password hashing middleware
-// Password hashing middleware
-userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
-  this.password = await bcrypt.hash(this.password, 10);
-});
-
-// Method to check password
-userSchema.methods.matchPassword = async function (enteredPassword) {
+// Instance method to check password
+User.prototype.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Indexes for performance
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ role: 1, isApproved: 1 });
-
-module.exports = mongoose.model('User', userSchema);
+module.exports = User;

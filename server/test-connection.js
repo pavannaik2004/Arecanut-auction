@@ -1,17 +1,21 @@
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
+const sequelize = require("./config/database");
+const dotenv = require("dotenv");
 
 dotenv.config();
 
-// Test MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
+// Test MySQL connection
+sequelize
+  .authenticate()
   .then(() => {
-    console.log('✅ MongoDB Atlas Connection Successful!');
-    console.log('Connected to:', mongoose.connection.host);
-    console.log('Database:', mongoose.connection.name);
+    console.log("✅ MySQL Connection Successful!");
+    console.log("Connected to:", sequelize.config.host);
+    console.log("Database:", sequelize.config.database);
+    return sequelize.close();
+  })
+  .then(() => {
     process.exit(0);
   })
-  .catch(err => {
-    console.error('❌ MongoDB Atlas Connection Error:', err.message);
+  .catch((err) => {
+    console.error("❌ MySQL Connection Error:", err.message);
     process.exit(1);
   });

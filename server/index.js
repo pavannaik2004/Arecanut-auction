@@ -1,11 +1,11 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const rateLimit = require("express-rate-limit");
 const cron = require("node-cron");
+const { sequelize } = require("./models");
+const { checkAndCloseExpiredAuctions } = require("./services/auctionService");
 
-// Load environment variables FIRST before any other imports that need them
 dotenv.config();
 
 // Initialize Cloudinary configuration after env variables are loaded
@@ -37,18 +37,21 @@ app.use(express.json());
 // app.use('/api/', generalLimiter);
 
 // Database Connection
-mongoose
-  .connect(
-    process.env.MONGO_URI || "mongodb://localhost:27017/arecanut-auction"
-  )
+sequelize
+  .authenticate()
   .then(() => {
-    console.log("✅ MongoDB Connected");
+    console.log("✅ MySQL Connected");
+    // Sync models with database (use { force: false } in production)
+    return sequelize.sync({ alter: true });
+  })
+  .then(() => {
+    console.log("✅ Database models synchronized");
     // Check for expired auctions on startup
     checkAndCloseExpiredAuctions();
     // Initialize scheduled cleanup jobs
     initializeCleanupJobs();
   })
-  .catch((err) => console.error("❌ MongoDB Connection Error:", err));
+  .catch((err) => console.error("❌ Database Connection Error:", err));
 
 // Cron job to check and close expired auctions every minute
 cron.schedule("* * * * *", async () => {
@@ -70,7 +73,6 @@ const authRoutes = require("./routes/authRoutes");
 const farmerRoutes = require("./routes/farmerRoutes");
 const traderRoutes = require("./routes/traderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-const paymentRoutes = require("./routes/paymentRoutes");
 
 // Rate limiting temporarily disabled for development
 // app.use('/api/auth/login', authLimiter);
@@ -78,7 +80,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/farmer", farmerRoutes);
 app.use("/api/trader", traderRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/payment", paymentRoutes);
 
 app.get("/", (req, res) => {
   res.send("Arecanut Auction API is running...");

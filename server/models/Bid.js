@@ -1,14 +1,50 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/database");
 
-const bidSchema = new mongoose.Schema({
-  auction: { type: mongoose.Schema.Types.ObjectId, ref: 'Auction', required: true },
-  trader: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  amount: { type: Number, required: true },
-  time: { type: Date, default: Date.now }
-}, { timestamps: true });
+const Bid = sequelize.define(
+  "Bid",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    auctionId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "Auctions",
+        key: "id",
+      },
+    },
+    traderId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "Users",
+        key: "id",
+      },
+    },
+    amount: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+    },
+    time: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    timestamps: true,
+    indexes: [
+      {
+        fields: ["auctionId", "amount"],
+      },
+      {
+        fields: ["traderId", "time"],
+      },
+    ],
+  },
+);
 
-// Indexes for performance
-bidSchema.index({ auction: 1, amount: -1 });
-bidSchema.index({ trader: 1, time: -1 });
-
-module.exports = mongoose.model('Bid', bidSchema);
+module.exports = Bid;

@@ -3,14 +3,16 @@ const Auction = require("../models/Auction");
 const Transaction = require("../models/Transaction");
 const Bid = require("../models/Bid");
 const { closeAuction } = require("../services/auctionService");
-const { cleanupOldImages } = require("../utils/cleanupOldImages");
+const { Op } = require("sequelize");
 
 // Get Pending Approvals
 exports.getPendingUsers = async (req, res) => {
   try {
-    const users = await User.find({
-      isApproved: false,
-      role: { $ne: "admin" },
+    const users = await User.findAll({
+      where: {
+        isApproved: false,
+        role: { [Op.ne]: "admin" },
+      },
     });
     res.json(users);
   } catch (error) {
@@ -21,7 +23,7 @@ exports.getPendingUsers = async (req, res) => {
 // Approve User
 exports.approveUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.isApproved = true;
@@ -36,7 +38,7 @@ exports.approveUser = async (req, res) => {
 // Reject/Delete User
 exports.rejectUser = async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id);
+    await User.destroy({ where: { id: req.params.id } });
     res.json({ message: "User rejected and removed" });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
@@ -48,14 +50,22 @@ exports.getAllAuctions = async (req, res) => {
   try {
     const { status } = req.query; // active, closed, completed, or all
 
-    let query = {};
+    let where = {};
     if (status && status !== "all") {
-      query.status = status;
+      where.status = status;
     }
 
-    const auctions = await Auction.find(query)
-      .populate("farmer", "name email farmLocation")
-      .sort({ createdAt: -1 });
+    const auctions = await Auction.findAll({
+      where,
+      include: [
+        {
+          model: User,
+          as: "farmer",
+          attributes: ["name", "email", "farmLocation"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
 
     res.json(auctions);
   } catch (error) {
@@ -66,19 +76,32 @@ exports.getAllAuctions = async (req, res) => {
 // Get Single Auction Details (Admin view)
 exports.getAuctionById = async (req, res) => {
   try {
-    const auction = await Auction.findById(req.params.id).populate(
-      "farmer",
-      "name email farmLocation"
-    );
+    const auction = await Auction.findByPk(req.params.id, {
+      include: [
+        {
+          model: User,
+          as: "farmer",
+          attributes: ["name", "email", "farmLocation"],
+        },
+      ],
+    });
 
     if (!auction) {
       return res.status(404).json({ message: "Auction not found" });
     }
 
     // Fetch bids history
-    const bids = await Bid.find({ auction: req.params.id })
-      .populate("trader", "name email")
-      .sort({ amount: -1 });
+    const bids = await Bid.findAll({
+      where: { auctionId: req.params.id },
+      include: [
+        {
+          model: User,
+          as: "trader",
+          attributes: ["name", "email"],
+        },
+      ],
+      order: [["amount", "DESC"]],
+    });
 
     res.json({ auction, bids });
   } catch (error) {
@@ -89,11 +112,26 @@ exports.getAuctionById = async (req, res) => {
 // Get All Transactions
 exports.getAllTransactions = async (req, res) => {
   try {
-    const transactions = await Transaction.find()
-      .populate("farmer", "name email")
-      .populate("trader", "name email")
-      .populate("auction", "variety quantity location")
-      .sort({ transactionDate: -1 });
+    const transactions = await Transaction.findAll({
+      include: [
+        {
+          model: User,
+          as: "farmer",
+          attributes: ["name", "email"],
+        },
+        {
+          model: User,
+          as: "trader",
+          attributes: ["name", "email"],
+        },
+        {
+          model: Auction,
+          as: "auction",
+          attributes: ["variety", "quantity", "location"],
+        },
+      ],
+      order: [["transactionDate", "DESC"]],
+    });
 
     res.json(transactions);
   } catch (error) {
@@ -106,7 +144,7 @@ exports.terminateAuction = async (req, res) => {
   try {
     const auctionId = req.params.id;
 
-    const auction = await Auction.findById(auctionId);
+    const auction = await Auction.findByPk(auctionId);
     if (!auction) {
       return res.status(404).json({ message: "Auction not found" });
     }
@@ -124,111 +162,33 @@ exports.terminateAuction = async (req, res) => {
   }
 };
 
-// Get Pending Auctions (for approval)
-exports.getPendingAuctions = async (req, res) => {
-  try {
-    const auctions = await Auction.find({ status: "pending" })
-      .populate("farmer", "name email farmLocation")
-      .sort({ createdAt: -1 });
-    res.json(auctions);
-  } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
-  }
-};
-
-// Approve Auction (Quality Assurance)
-exports.approveAuction = async (req, res) => {
-  try {
-    const auction = await Auction.findById(req.params.id);
-    if (!auction) return res.status(404).json({ message: "Auction not found" });
-
-    if (auction.status !== "pending") {
-      return res.status(400).json({ message: "Auction is not in pending status" });
-    }
-
-    auction.status = "active";
-    await auction.save();
-
-    res.json({ message: "Auction approved and is now live", auction });
-  } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
-  }
-};
-
-// Edit Auction (Admin can modify quality and base price before approval)
-exports.editAuction = async (req, res) => {
-  try {
-    const { qualityGrade, basePrice } = req.body;
-    const auction = await Auction.findById(req.params.id);
-    
-    if (!auction) return res.status(404).json({ message: "Auction not found" });
-
-    if (auction.status !== "pending") {
-      return res.status(400).json({ message: "Only pending auctions can be edited" });
-    }
-
-    // Update allowed fields
-    if (qualityGrade) auction.qualityGrade = qualityGrade;
-    if (basePrice) {
-      auction.basePrice = basePrice;
-      auction.currentHighestBid = basePrice; // Reset highest bid to new base price
-    }
-
-    await auction.save();
-    res.json({ message: "Auction updated successfully", auction });
-  } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
-  }
-};
-
-// Reject Auction
-exports.rejectAuction = async (req, res) => {
-  try {
-    const { reason } = req.body;
-    const auction = await Auction.findById(req.params.id);
-    
-    if (!auction) return res.status(404).json({ message: "Auction not found" });
-
-    if (auction.status !== "pending") {
-      return res.status(400).json({ message: "Auction is not in pending status" });
-    }
-
-    // You could either delete it or mark as rejected
-    await Auction.findByIdAndDelete(req.params.id);
-    
-    res.json({ message: "Auction rejected and removed", reason });
-  } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
-  }
-};
-
 // Get Dashboard Statistics
 exports.getDashboardStats = async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments({ role: { $ne: "admin" } });
-    const totalFarmers = await User.countDocuments({ role: "farmer" });
-    const totalTraders = await User.countDocuments({ role: "trader" });
-    const pendingApprovals = await User.countDocuments({
-      isApproved: false,
-      role: { $ne: "admin" },
+    const totalUsers = await User.count({
+      where: { role: { [Op.ne]: "admin" } },
+    });
+    const totalFarmers = await User.count({ where: { role: "farmer" } });
+    const totalTraders = await User.count({ where: { role: "trader" } });
+    const pendingApprovals = await User.count({
+      where: { isApproved: false, role: { [Op.ne]: "admin" } },
     });
 
-    const totalAuctions = await Auction.countDocuments();
-    const activeAuctions = await Auction.countDocuments({ status: "active" });
-    const pendingAuctions = await Auction.countDocuments({ status: "pending" });
-    const closedAuctions = await Auction.countDocuments({ status: "closed" });
-    const completedAuctions = await Auction.countDocuments({
-      status: "completed",
+    const totalAuctions = await Auction.count();
+    const activeAuctions = await Auction.count({ where: { status: "active" } });
+    const closedAuctions = await Auction.count({ where: { status: "closed" } });
+    const completedAuctions = await Auction.count({
+      where: { status: "completed" },
     });
 
-    const totalBids = await Bid.countDocuments();
-    const totalTransactions = await Transaction.countDocuments();
+    const totalBids = await Bid.count();
+    const totalTransactions = await Transaction.count();
 
     // Calculate total transaction value
-    const transactions = await Transaction.find();
+    const transactions = await Transaction.findAll();
     const totalTransactionValue = transactions.reduce(
       (sum, t) => sum + t.finalAmount,
-      0
+      0,
     );
 
     res.json({
@@ -251,47 +211,6 @@ exports.getDashboardStats = async (req, res) => {
         totalTransactionValue,
       },
     });
-  } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
-  }
-};
-
-// Manual Image Cleanup (Admin only)
-exports.cleanupOldImages = async (req, res) => {
-  try {
-    const { daysOld = 90 } = req.query;
-
-    console.log(
-      `Admin triggered cleanup for images older than ${daysOld} days`
-    );
-    const result = await cleanupOldImages(parseInt(daysOld));
-
-    res.json({
-      message: "Image cleanup completed",
-      total: result.total,
-      deleted: result.deleted,
-      failed: result.failed,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
-  }
-};
-
-// Get All Farmers
-exports.getAllFarmers = async (req, res) => {
-  try {
-    const farmers = await User.find({ role: "farmer" }).select('-password').sort({ createdAt: -1 });
-    res.json(farmers);
-  } catch (error) {
-    res.status(500).json({ message: "Server Error", error: error.message });
-  }
-};
-
-// Get All Traders
-exports.getAllTraders = async (req, res) => {
-  try {
-    const traders = await User.find({ role: "trader" }).select('-password').sort({ createdAt: -1 });
-    res.json(traders);
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
   }

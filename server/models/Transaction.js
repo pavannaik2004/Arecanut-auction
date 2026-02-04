@@ -1,18 +1,68 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/database");
 
-const transactionSchema = new mongoose.Schema({
-  auction: { type: mongoose.Schema.Types.ObjectId, ref: 'Auction', required: true },
-  farmer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  trader: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  finalAmount: { type: Number, required: true },
-  paymentStatus: { type: String, enum: ['pending', 'paid'], default: 'pending' },
-  transactionDate: { type: Date, default: Date.now }
-}, { timestamps: true });
+const Transaction = sequelize.define(
+  "Transaction",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    auctionId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "Auctions",
+        key: "id",
+      },
+    },
+    farmerId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "Users",
+        key: "id",
+      },
+    },
+    traderId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: "Users",
+        key: "id",
+      },
+    },
+    finalAmount: {
+      type: DataTypes.FLOAT,
+      allowNull: false,
+    },
+    paymentStatus: {
+      type: DataTypes.ENUM("pending", "paid"),
+      defaultValue: "pending",
+    },
+    transactionDate: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    timestamps: true,
+    indexes: [
+      {
+        fields: ["auctionId"],
+      },
+      {
+        fields: ["farmerId", "transactionDate"],
+      },
+      {
+        fields: ["traderId", "transactionDate"],
+      },
+      {
+        fields: ["paymentStatus"],
+      },
+    ],
+  },
+);
 
-// Indexes for performance
-transactionSchema.index({ auction: 1 });
-transactionSchema.index({ farmer: 1, transactionDate: -1 });
-transactionSchema.index({ trader: 1, transactionDate: -1 });
-transactionSchema.index({ paymentStatus: 1 });
-
-module.exports = mongoose.model('Transaction', transactionSchema);
+module.exports = Transaction;

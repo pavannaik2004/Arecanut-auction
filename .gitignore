@@ -43,3 +43,6 @@ build/
 # Testing
 coverage/
 .nyc_output/
+
+#docs
+docs
