@@ -25,6 +25,7 @@ import PendingAuctions from './pages/admin/PendingAuctions';
 import AllFarmers from './pages/admin/AllFarmers';
 import AllTraders from './pages/admin/AllTraders';
 import AllPayments from './pages/admin/AllPayments';
+import MarketStats from './pages/MarketStats';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -71,6 +72,11 @@ function App() {
             <Route path="/trader/my-bids" element={<MyBids />} />
             <Route path="/trader/auction/:id" element={<AuctionDetail />} />
             <Route path="/trader/payments" element={<TraderPayments />} />
+          </Route>
+
+          {/* Market Stats Route - Accessible to all roles */}
+          <Route element={<ProtectedRoute allowedRoles={['farmer', 'trader', 'admin']}><DashboardLayout /></ProtectedRoute>}>
+            <Route path="/market-stats" element={<MarketStats />} />
           </Route>
 
           {/* Admin Routes */}

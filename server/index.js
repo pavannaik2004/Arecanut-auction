@@ -68,6 +68,7 @@ const authRoutes = require("./routes/authRoutes");
 const farmerRoutes = require("./routes/farmerRoutes");
 const traderRoutes = require("./routes/traderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const statsRoutes = require("./routes/statsRoutes");
 
 // Rate limiting temporarily disabled for development
 // app.use('/api/auth/login', authLimiter);
@@ -75,6 +76,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/farmer", farmerRoutes);
 app.use("/api/trader", traderRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/stats", statsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Arecanut Auction API is running...");

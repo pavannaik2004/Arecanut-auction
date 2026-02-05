@@ -41,6 +41,9 @@ export const API_ENDPOINTS = {
   farmerPayments: `${API_BASE_URL}/api/payment/farmer/my-payments`,
   farmerPendingPayments: `${API_BASE_URL}/api/payment/farmer/pending-payments`,
   paymentByAuction: (id) => `${API_BASE_URL}/api/payment/auction/${id}`,
+
+  // Market Stats
+  marketStats: `${API_BASE_URL}/api/stats`,
 };
 
 export default API_BASE_URL;
