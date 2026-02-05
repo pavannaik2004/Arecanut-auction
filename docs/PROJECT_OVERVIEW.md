@@ -92,8 +92,8 @@ Our platform provides:
 ### Backend
 - **Runtime:** Node.js
 - **Framework:** Express.js 5.2.1
-- **Database:** MongoDB
-- **ODM:** Mongoose 9.0.2
+- **Database:** MySQL
+- **ORM:** Sequelize
 - **Authentication:** JSON Web Tokens (JWT) 9.0.3
 - **Password Hashing:** bcryptjs 3.0.3
 - **File Upload:** Multer 2.0.2

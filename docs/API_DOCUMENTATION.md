@@ -720,7 +720,55 @@ curl -X POST http://localhost:5000/api/trader/bid \
 
 ---
 
-## 📝 Notes
+## � Market Statistics Endpoints
+
+### 1. Get Market Statistics
+
+**GET** `/stats`
+
+Retrieve aggregated market statistics including daily and overall summaries, and a list of completed auctions.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Response:**
+```json
+{
+  "summary": {
+    "overall": {
+      "avgPrice": 45000.50,
+      "maxPrice": 52000,
+      "totalVolume": 5000,
+      "count": 120
+    },
+    "today": {
+      "avgPrice": 46000.00,
+      "maxPrice": 48000,
+      "totalVolume": 500,
+      "count": 5
+    }
+  },
+  "auctions": [
+    {
+      "id": 101,
+      "variety": "Chali",
+      "qualityGrade": "A Grade",
+      "quantity": 100,
+      "basePrice": 42000,
+      "winningBid": 46500,
+      "location": "Shimoga",
+      "farmerName": "Ramesh Kumar",
+      "completedDate": "2025-02-05T10:30:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+## �📝 Notes
 
 1. **Token Storage:** Store JWT tokens securely (localStorage or httpOnly cookies)
 2. **Token Refresh:** Tokens expire after 24 hours; users must login again

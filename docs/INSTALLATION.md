@@ -11,10 +11,10 @@ Before you begin, ensure you have the following installed on your system:
 - **npm** (comes with Node.js)
   - Verify installation: `npm --version`
 
-- **MongoDB** (v6.x or higher)
-  - Option 1: Local installation - https://www.mongodb.com/try/download/community
-  - Option 2: MongoDB Atlas (Cloud) - https://www.mongodb.com/cloud/atlas
-  - Verify installation: `mongod --version`
+- **MySQL Database** (v8.0 or higher)
+  - Download from: https://dev.mysql.com/downloads/installer/
+  - Verify installation: `mysql --version`
+  - Ensure MySQL Server is running on port 3306
 
 - **Git** (for cloning the repository)
   - Download from: https://git-scm.com/
@@ -317,7 +317,7 @@ NODE_ENV=production npm start
 
 - [ ] Change default admin password
 - [ ] Generate strong JWT_SECRET
-- [ ] Use MongoDB Atlas with authentication
+- [ ] Use Secure MySQL Instance with authentication
 - [ ] Enable HTTPS
 - [ ] Set up environment variables properly
 - [ ] Remove or secure admin creation script

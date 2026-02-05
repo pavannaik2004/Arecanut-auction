@@ -6,7 +6,8 @@
 2. [Farmer Guide](#farmer-guide)
 3. [Trader Guide](#trader-guide)
 4. [Admin Guide](#admin-guide)
-5. [Troubleshooting](#troubleshooting)
+5. [Market Statistics](#market-statistics)
+6. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -335,7 +336,33 @@ View important metrics:
    - Monitor system logs
 
 ---
+## 📊 Market Statistics
 
+The Market Statistics page is available to all registered users (Farmers, Traders, and Admins). It provides valuable insights into current market trends to help you make informed decisions.
+
+### Accessing Stats
+Click on **"Market Stats"** in the sidebar navigation menu.
+
+### Features
+
+#### 1. Today's Overview
+At the top of the page, you'll see real-time metrics for the current day:
+- **Avg. Price (Today):** The weighted average price per unit/quintal for auctions completed today.
+- **Highest Bid (Today):** The maximum price fetched by any lot today.
+- **Volume Sold (Today):** Total quantity of produce sold today.
+- **Auctions Completed:** Number of auctions finalized today.
+
+#### 2. Completed Auctions Log
+A detailed table listing all historically completed auctions, showing:
+- **Date:** When the auction ended.
+- **Variety & Quality:** The type and grade of arecanut.
+- **Quantity:** How much was sold.
+- **Winning Bid:** The final sale price.
+- **Location:** Which market/APMC the lot belonged to.
+
+Use this data to understand price trends for specific varieties or locations.
+
+---
 ## 🐛 Troubleshooting
 
 ### Common Issues and Solutions

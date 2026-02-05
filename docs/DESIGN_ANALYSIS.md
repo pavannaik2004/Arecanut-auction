@@ -3,7 +3,7 @@
 ## 📊 Executive Summary
 
 **Project:** Arecanut Auction Platform  
-**Type:** Full-stack MERN application  
+**Type:** Full-stack Application (Node + MySQL + React)  
 **Review Date:** December 25, 2025  
 **Overall Status:** ✅ Good foundation with areas for improvement
 
