@@ -13,7 +13,7 @@ exports.getMarketStats = async (req, res) => {
         status: 'completed'
       },
       include: [
-        { model: User, as: 'Farmer', attributes: ['name'] }
+        { model: User, as: 'farmer', attributes: ['name'] }
       ],
       order: [['updatedAt', 'DESC']]
     });
@@ -58,7 +58,7 @@ exports.getMarketStats = async (req, res) => {
         basePrice: a.basePrice,
         winningBid: a.currentHighestBid,
         location: a.location,
-        farmerName: a.Farmer ? a.Farmer.name : 'Unknown',
+        farmerName: a.farmer ? a.farmer.name : 'Unknown',
         completedDate: a.updatedAt
       }))
     });
