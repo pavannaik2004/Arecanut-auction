@@ -38,8 +38,16 @@ const Transaction = sequelize.define(
       allowNull: false,
     },
     paymentStatus: {
-      type: DataTypes.ENUM("pending", "paid"),
+      type: DataTypes.ENUM("pending", "paid", "failed"),
       defaultValue: "pending",
+    },
+    paymentMethod: {
+      type: DataTypes.ENUM("upi", "bank_transfer", "card", "cash"),
+      allowNull: true,
+    },
+    notes: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     transactionDate: {
       type: DataTypes.DATE,

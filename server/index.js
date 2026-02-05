@@ -5,14 +5,9 @@ const rateLimit = require("express-rate-limit");
 const cron = require("node-cron");
 const { sequelize } = require("./models");
 const { checkAndCloseExpiredAuctions } = require("./services/auctionService");
+const { initializeCleanupJobs } = require("./jobs/imageCleanup");
 
 dotenv.config();
-
-// Initialize Cloudinary configuration after env variables are loaded
-require("./config/cloudinary");
-
-const { checkAndCloseExpiredAuctions } = require("./services/auctionService");
-const { initializeCleanupJobs } = require("./jobs/imageCleanup");
 
 const app = express();
 const PORT = process.env.PORT || 5000;

@@ -1,10 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const Payment = require('../models/Payment');
-const Auction = require('../models/Auction');
-const Bid = require('../models/Bid');
-const Transaction = require('../models/Transaction');
+const  { Transaction, Auction, Bid, User }  = require('../models');
 
 router.use(authMiddleware);
 
@@ -17,7 +14,10 @@ router.post('/create', async (req, res) => {
       return res.status(403).json({ message: 'Only traders can initiate payments' });
     }
 
-    const auction = await Auction.findById(auctionId).populate('farmer');
+    const auction = await Auction.findByPk(auctionId, {
+      include: [{ model: User, as: 'farmer' }]
+    });
+
     if (!auction) {
       return res.status(404).json({ message: 'Auction not found' });
     }
@@ -27,188 +27,143 @@ router.post('/create', async (req, res) => {
     }
 
     // Check if trader won the auction
-    const highestBid = await Bid.findOne({ auction: auctionId })
-      .sort({ amount: -1 })
-      .populate('trader');
+    const highestBid = await Bid.findOne({
+      where: { auctionId: auctionId },
+      order: [['amount', 'DESC']],
+      include: [{ model: User, as: 'trader' }]
+    });
 
-    if (!highestBid || highestBid.trader._id.toString() !== req.user.id) {
+    if (!highestBid || highestBid.traderId !== req.user.id) {
       return res.status(403).json({ message: 'You did not win this auction' });
     }
 
     // Check if payment already exists
-    const existingPayment = await Payment.findOne({ auction: auctionId });
-    if (existingPayment) {
-      return res.status(400).json({ message: 'Payment already exists for this auction' });
+    let payment = await Transaction.findOne({ where: { auctionId: auctionId } });
+    
+    if (payment) {
+        // If payment/transaction exists (e.g. created by auction service), update it
+        if (payment.paymentStatus === 'paid') {
+             return res.status(400).json({ message: 'Payment already completed for this auction' });
+        }
+        
+        // Update existing transaction
+        payment.paymentMethod = paymentMethod;
+        payment.notes = notes;
+        payment.transactionDate = new Date(); // Update date to actual payment attempt
+        // DO NOT set to paid yet unless it's direct? Assuming status stays pending or moves to processing?
+        // Original code kept it pending or whatever 'create' default was? 
+        // Let's assume we just update details here. 
+        // If the original flow allowed creating a 'pending' payment, we do the same.
+        await payment.save();
+    } else {
+        // Create new if not exists
+        payment = await Transaction.create({
+          auctionId: auctionId,
+          traderId: req.user.id,
+          farmerId: auction.farmerId,
+          finalAmount: highestBid.amount,
+          paymentMethod,
+          notes,
+          paymentStatus: 'pending',
+          transactionDate: new Date()
+        });
     }
 
-    const payment = new Payment({
-      auction: auctionId,
-      trader: req.user.id,
-      farmer: auction.farmer._id,
-      amount: highestBid.amount,
-      paymentMethod,
-      notes,
-      transactionId: `TXN${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-      status: 'pending'
+    res.status(201).json({ message: 'Payment initiated successfully', payment });
+  } catch (error) {
+    console.error('Error in create payment:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
+// Get payments for a trader
+router.get('/trader/:id', async (req, res) => {
+  try {
+    if (req.user.id != req.params.id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const payments = await Transaction.findAll({
+      where: { traderId: req.params.id },
+      include: [
+        { model: Auction, as: 'auction', attributes: ['variety', 'quantity'] },
+        { model: User, as: 'farmer', attributes: ['name', 'email'] }
+      ],
+      order: [['createdAt', 'DESC']]
     });
 
-    await payment.save();
-
-    res.status(201).json({ message: 'Payment initiated successfully', payment });
+    res.json(payments);
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
 });
 
-// Complete payment (Mock payment completion)
-router.put('/complete/:id', async (req, res) => {
+// Get payments for a farmer
+router.get('/farmer/:id', async (req, res) => {
   try {
-    const payment = await Payment.findById(req.params.id);
+    if (req.user.id != req.params.id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const payments = await Transaction.findAll({
+      where: { farmerId: req.params.id },
+      include: [
+        { model: Auction, as: 'auction', attributes: ['variety', 'quantity'] },
+        { model: User, as: 'trader', attributes: ['name', 'email'] }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
+// Update payment status (Farmer confirms or Admin overrides)
+router.put('/update-status/:id', async (req, res) => {
+  try {
+    const { status } = req.body;
     
+    const payment = await Transaction.findByPk(req.params.id);
     if (!payment) {
       return res.status(404).json({ message: 'Payment not found' });
     }
 
-    if (req.user.role !== 'trader' || payment.trader.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Unauthorized' });
+    // Only farmer who received payment or admin can update status
+    if (req.user.id !== payment.farmerId && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to update this payment' });
     }
 
-    if (payment.status !== 'pending') {
-      return res.status(400).json({ message: 'Payment already processed' });
-    }
-
-    payment.status = 'completed';
-    payment.paymentDate = new Date();
+    payment.paymentStatus = status;
     await payment.save();
-
-    // Update auction status to completed
-    await Auction.findByIdAndUpdate(payment.auction, { status: 'completed' });
-
-    // Update transaction payment status
-    await Transaction.findOneAndUpdate(
-      { auction: payment.auction },
-      { paymentStatus: 'paid' }
-    );
-
-    res.json({ message: 'Payment completed successfully', payment });
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
-  }
-});
-
-// Get trader payments
-router.get('/trader/my-payments', async (req, res) => {
-  try {
-    if (req.user.role !== 'trader') {
-      return res.status(403).json({ message: 'Traders only' });
-    }
-
-    const payments = await Payment.find({ trader: req.user.id })
-      .populate('auction', 'variety quantity location image')
-      .populate('farmer', 'name email farmLocation')
-      .sort({ createdAt: -1 });
-
-    res.json(payments);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
-  }
-});
-
-// Get trader pending payments (for dashboard notification)
-router.get('/trader/pending-payments', async (req, res) => {
-  try {
-    if (req.user.role !== 'trader') {
-      return res.status(403).json({ message: 'Traders only' });
-    }
-
-    const pendingPayments = await Payment.find({ 
-      trader: req.user.id,
-      status: 'pending'
-    })
-      .populate('auction', 'variety quantity location image endTime')
-      .populate('farmer', 'name email farmLocation')
-      .sort({ createdAt: -1 });
-
-    res.json(pendingPayments);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
-  }
-});
-
-// Get farmer payments
-router.get('/farmer/my-payments', async (req, res) => {
-  try {
-    if (req.user.role !== 'farmer') {
-      return res.status(403).json({ message: 'Farmers only' });
-    }
-
-    const payments = await Payment.find({ farmer: req.user.id })
-      .populate('auction', 'variety quantity location image')
-      .populate('trader', 'name email')
-      .sort({ createdAt: -1 });
-
-    res.json(payments);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
-  }
-});
-
-// Get farmer pending payments (for dashboard notification)
-router.get('/farmer/pending-payments', async (req, res) => {
-  try {
-    if (req.user.role !== 'farmer') {
-      return res.status(403).json({ message: 'Farmers only' });
-    }
-
-    const pendingPayments = await Payment.find({ 
-      farmer: req.user.id,
-      status: 'pending'
-    })
-      .populate('auction', 'variety quantity location image endTime')
-      .populate('trader', 'name email')
-      .sort({ createdAt: -1 });
-
-    res.json(pendingPayments);
+    
+    res.json({ message: 'Payment status updated', payment });
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
 });
 
 // Get all payments (Admin)
-router.get('/admin/all-payments', async (req, res) => {
-  try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Admins only' });
+router.get('/all', async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+             return res.status(403).json({ message: 'Access denied. Admin only.' });
+        }
+
+        const payments = await Transaction.findAll({
+            include: [
+                { model: Auction, as: 'auction', attributes: ['variety', 'quantity'] },
+                { model: User, as: 'farmer', attributes: ['name'] },
+                { model: User, as: 'trader', attributes: ['name'] }
+            ],
+            order: [['createdAt', 'DESC']]
+        });
+        res.json(payments);
+    } catch (error) {
+        console.error('Error fetching all payments:', error);
+        res.status(500).json({ message: 'Server Error', error: error.message });
     }
-
-    const payments = await Payment.find()
-      .populate('auction', 'variety quantity location')
-      .populate('trader', 'name email')
-      .populate('farmer', 'name email farmLocation')
-      .sort({ createdAt: -1 });
-
-    res.json(payments);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
-  }
-});
-
-// Get payment by auction ID
-router.get('/auction/:auctionId', async (req, res) => {
-  try {
-    const payment = await Payment.findOne({ auction: req.params.auctionId })
-      .populate('auction', 'variety quantity location')
-      .populate('trader', 'name email')
-      .populate('farmer', 'name email farmLocation');
-
-    if (!payment) {
-      return res.status(404).json({ message: 'No payment found for this auction' });
-    }
-
-    res.json(payment);
-  } catch (error) {
-    res.status(500).json({ message: 'Server Error', error: error.message });
-  }
 });
 
 module.exports = router;

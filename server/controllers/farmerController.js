@@ -23,10 +23,10 @@ exports.createAuction = async (req, res) => {
       location,
       endTime,
       image,
-      status: "active",
+      status: "pending",
     });
 
-    res.status(201).json({ message: "Auction created successfully", auction });
+    res.status(201).json({ message: "Auction created successfully. Waiting for admin approval.", auction });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
   }

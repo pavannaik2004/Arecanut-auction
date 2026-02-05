@@ -41,3 +41,5 @@ build/
 
 #Scripts
 scripts
+
+package-lock.json
