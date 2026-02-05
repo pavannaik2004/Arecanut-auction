@@ -48,6 +48,22 @@
 - **Better Visual Hierarchy**: Improved typography and spacing
 - **Responsive Design**: Mobile-friendly layout
 
+### ✅ 5. Market Statistics & Analytics
+- **Backend Service**:
+  - Created `statsController.js` to aggregate auction data
+  - New route: `/api/stats`
+  - Calculates daily and overall market metrics (Avg Price, Max Price, Total Volume)
+- **Frontend Page**:
+  - `MarketStats.jsx`: Comprehensive dashboard for market trends
+  - Visualization of today's market performance
+  - Historical data table of completed auctions
+  - Accessible to all roles (Farmers, Traders, Admin)
+- **Data Insights**:
+  - Real-time average price per unit
+  - Volume tracking
+  - Price trends by quality/variety
+
+
 ### ✅ 5. Payment Mockup System
 - **New Model**: Created `Payment.js` model with fields:
   - auction, trader, farmer, amount, status, paymentMethod, transactionId, paymentDate, notes
