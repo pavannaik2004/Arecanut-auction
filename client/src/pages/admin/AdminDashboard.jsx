@@ -300,7 +300,7 @@ const AdminDashboard = () => {
                 <h3 className="text-lg font-bold mb-4">Recent Activity</h3>
                 <div className="space-y-2">
                   {transactions.slice(0, 5).map((txn, index) => (
-                    <div key={txn._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div key={txn.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <p className="font-medium">
                           {txn.auction?.variety} - {txn.auction?.quantity} KG
@@ -347,7 +347,7 @@ const AdminDashboard = () => {
                     </thead>
                     <tbody className="divide-y">
                       {pendingUsers.map((user) => (
-                        <tr key={user._id}>
+                        <tr key={user.id}>
                           <td className="py-4 font-medium">{user.name}</td>
                           <td className="py-4 text-gray-600">{user.email}</td>
                           <td className="py-4 capitalize">
@@ -361,13 +361,13 @@ const AdminDashboard = () => {
                           <td className="py-4">
                             <div className="flex space-x-2">
                               <button 
-                                onClick={() => handleApprove(user._id)} 
+                                onClick={() => handleApprove(user.id)} 
                                 className="flex items-center px-3 py-1 bg-green-50 text-green-700 hover:bg-green-100 rounded text-sm font-bold transition"
                               >
                                 <CheckCircle className="w-4 h-4 mr-1" /> Approve
                               </button>
                               <button 
-                                onClick={() => handleReject(user._id)} 
+                                onClick={() => handleReject(user.id)} 
                                 className="flex items-center px-3 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded text-sm font-bold transition"
                               >
                                 <XCircle className="w-4 h-4 mr-1" /> Reject
@@ -436,7 +436,7 @@ const AdminDashboard = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredAuctions.map((auction) => (
                     <div 
-                      key={auction._id} 
+                      key={auction.id} 
                       className={`border-2 rounded-xl p-5 transition ${getAuctionStatusColor(auction)}`}
                     >
                       <div className="flex justify-between items-start mb-3">
@@ -479,7 +479,7 @@ const AdminDashboard = () => {
 
                       <div className="flex gap-2 mt-4">
                         <button
-                          onClick={() => navigate(`/admin/auction/${auction._id}`)}
+                          onClick={() => navigate(`/admin/auction/${auction.id}`)}
                           className="flex-1 px-4 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-bold transition flex items-center justify-center"
                         >
                           <Eye className="w-4 h-4 mr-2" />
@@ -487,7 +487,7 @@ const AdminDashboard = () => {
                         </button>
                         {auction.status === 'active' && (
                           <button
-                            onClick={() => handleTerminateAuction(auction._id)}
+                            onClick={() => handleTerminateAuction(auction.id)}
                             className="flex-1 px-4 py-2 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg font-bold transition flex items-center justify-center"
                           >
                             <XCircle className="w-4 h-4 mr-2" />
@@ -530,7 +530,7 @@ const AdminDashboard = () => {
                     </thead>
                     <tbody className="divide-y">
                       {transactions.map((txn) => (
-                        <tr key={txn._id}>
+                        <tr key={txn.id}>
                           <td className="py-4 text-sm">
                             {new Date(txn.transactionDate).toLocaleDateString()}
                           </td>

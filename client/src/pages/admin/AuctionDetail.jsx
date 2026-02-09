@@ -167,7 +167,7 @@ const AuctionDetail = () => {
                 </div>
                 <div>
                   <span className="text-gray-500 block">Auction ID</span>
-                  <span className="font-mono text-xs">{auction._id}</span>
+                  <span className="font-mono text-xs">{auction.id}</span>
                 </div>
               </div>
             </div>

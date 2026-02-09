@@ -41,7 +41,7 @@ const TraderDashboard = () => {
   };
 
   const handleViewAuction = (auction) => {
-    navigate(`/trader/auction/${auction._id}`);
+    navigate(`/trader/auction/${auction.id}`);
   };
 
   const activeAuctions = auctions.filter(a => a.status === 'active');
@@ -77,7 +77,7 @@ const TraderDashboard = () => {
             
             <div className="mt-4 space-y-3">
               {pendingPayments.map((payment) => (
-                <div key={payment._id} className="bg-white rounded-lg p-4 border border-amber-200 flex items-center justify-between">
+                <div key={payment.id} className="bg-white rounded-lg p-4 border border-amber-200 flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     {payment.auction?.image && (
                       <img 
@@ -157,7 +157,7 @@ const TraderDashboard = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {activeAuctions.map((auction) => (
             <AuctionCard 
-              key={auction._id} 
+              key={auction.id} 
               auction={auction}
               showActions={true}
               onAction={handleViewAuction}

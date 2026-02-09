@@ -122,7 +122,7 @@ const BrowseAuctions = () => {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {auctions.map((auction) => (
-            <AuctionCard key={auction._id} auction={auction} onClick={() => navigate(`/trader/auction/${auction._id}`)} />
+            <AuctionCard key={auction.id} auction={auction} onClick={() => navigate(`/trader/auction/${auction.id}`)} />
           ))}
         </div>
       )}

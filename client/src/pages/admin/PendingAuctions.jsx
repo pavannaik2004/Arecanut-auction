@@ -26,7 +26,7 @@ const PendingAuctions = () => {
   };
 
   const handleEdit = (auction) => {
-    setEditingId(auction._id);
+    setEditingId(auction.id);
     setEditForm({
       qualityGrade: auction.qualityGrade,
       basePrice: auction.basePrice
@@ -91,7 +91,7 @@ const PendingAuctions = () => {
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {auctions.map((auction) => (
-            <div key={auction._id} className="bg-white rounded-xl shadow-sm border border-yellow-200 overflow-hidden">
+            <div key={auction.id} className="bg-white rounded-xl shadow-sm border border-yellow-200 overflow-hidden">
               {auction.image ? (
                 <img src={auction.image} alt={auction.variety} className="w-full h-48 object-cover" />
               ) : (
@@ -106,7 +106,7 @@ const PendingAuctions = () => {
                   <p><strong>Farmer:</strong> {auction.farmer?.name}</p>
                   <p><strong>Quantity:</strong> {auction.quantity} kg</p>
                   
-                  {editingId === auction._id ? (
+                  {editingId === auction.id ? (
                     <>
                       <div>
                         <label className="block text-xs font-medium text-gray-600 mb-1">Quality Grade:</label>
@@ -142,10 +142,10 @@ const PendingAuctions = () => {
                   <p><strong>End Time:</strong> {new Date(auction.endTime).toLocaleString()}</p>
                 </div>
 
-                {editingId === auction._id ? (
+                {editingId === auction.id ? (
                   <div className="flex space-x-2 pt-4">
                     <button
-                      onClick={() => handleSaveEdit(auction._id)}
+                      onClick={() => handleSaveEdit(auction.id)}
                       className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center"
                     >
                       <Save className="w-4 h-4 mr-1" />
@@ -168,14 +168,14 @@ const PendingAuctions = () => {
                       Edit
                     </button>
                     <button
-                      onClick={() => handleApprove(auction._id)}
+                      onClick={() => handleApprove(auction.id)}
                       className="flex-1 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center"
                     >
                       <Check className="w-4 h-4 mr-1" />
                       Approve
                     </button>
                     <button
-                      onClick={() => handleReject(auction._id)}
+                      onClick={() => handleReject(auction.id)}
                       className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center justify-center"
                     >
                       <X className="w-4 h-4 mr-1" />

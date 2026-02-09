@@ -49,7 +49,7 @@ const AuctionDetail = () => {
   const isWinner = () => {
     if (!bids.length || !auction) return false;
     const highestBid = bids[0];
-    return highestBid.trader?._id === JSON.parse(localStorage.getItem('user'))?._id;
+    return highestBid.traderId === JSON.parse(localStorage.getItem('user'))?.id;
   };
 
   const handleInitiatePayment = async (e) => {

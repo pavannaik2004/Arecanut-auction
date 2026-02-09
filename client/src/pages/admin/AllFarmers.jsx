@@ -57,7 +57,7 @@ const AllFarmers = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {farmers.map((farmer) => (
-                <tr key={farmer._id} className="hover:bg-gray-50">
+                <tr key={farmer.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">

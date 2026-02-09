@@ -16,12 +16,23 @@ const FarmerDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [auctionsRes, paymentsRes] = await Promise.all([
+        const [auctionsRes, paymentsRes] = await Promise.allSettled([
           axios.get(API_ENDPOINTS.myAuctions),
           axios.get(API_ENDPOINTS.farmerPendingPayments)
         ]);
-        setAuctions(auctionsRes.data);
-        setPendingPayments(paymentsRes.data);
+
+        if (auctionsRes.status === 'fulfilled') {
+          setAuctions(auctionsRes.value.data);
+        } else {
+          console.error('Error fetching auctions', auctionsRes.reason);
+        }
+
+        if (paymentsRes.status === 'fulfilled') {
+          setPendingPayments(paymentsRes.value.data);
+        } else {
+          console.error('Error fetching pending payments', paymentsRes.reason);
+          setPendingPayments([]);
+        }
       } catch (error) {
         console.error("Error fetching data", error);
       } finally {
@@ -85,7 +96,7 @@ const FarmerDashboard = () => {
             
             <div className="mt-4 space-y-3">
               {pendingPayments.map((payment) => (
-                <div key={payment._id} className="bg-white rounded-lg p-4 border border-blue-200 flex items-center justify-between">
+                <div key={payment.id} className="bg-white rounded-lg p-4 border border-blue-200 flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     {payment.auction?.image && (
                       <img 
@@ -229,7 +240,7 @@ const FarmerDashboard = () => {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredAuctions.map((auction) => (
             <AuctionCard 
-              key={auction._id} 
+              key={auction.id} 
               auction={auction}
             />
           ))}

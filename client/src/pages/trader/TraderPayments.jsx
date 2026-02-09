@@ -73,7 +73,7 @@ const TraderPayments = () => {
       ) : (
         <div className="grid gap-6">
           {payments.map((payment) => (
-            <div key={payment._id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div key={payment.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
@@ -112,7 +112,7 @@ const TraderPayments = () => {
               {payment.status === 'pending' && (
                 <div className="mt-4">
                   <button
-                    onClick={() => handleCompletePayment(payment._id)}
+                    onClick={() => handleCompletePayment(payment.id)}
                     className="w-full py-3 bg-primary text-white font-bold rounded-lg hover:bg-green-900 transition"
                   >
                     <CreditCard className="w-5 h-5 inline mr-2" />

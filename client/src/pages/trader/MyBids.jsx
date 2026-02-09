@@ -55,7 +55,7 @@ const MyBids = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {bids.map((bid) => (
-                <tr key={bid._id} className="hover:bg-gray-50">
+                <tr key={bid.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">{bid.auction?.variety}</div>
                     <div className="text-xs text-gray-500">{bid.auction?.location}</div>
@@ -78,7 +78,7 @@ const MyBids = () => {
                   </td>
                   <td className="px-6 py-4">
                     <button
-                      onClick={() => navigate(`/trader/auction/${bid.auction._id}`)}
+                      onClick={() => navigate(`/trader/auction/${bid.auction.id}`)}
                       className="text-primary hover:underline font-medium"
                     >
                       View Auction

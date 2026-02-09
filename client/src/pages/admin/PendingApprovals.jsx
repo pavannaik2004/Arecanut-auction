@@ -76,7 +76,7 @@ const PendingApprovals = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {users.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50">
+                <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{user.name}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">{user.email}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">{user.phone}</td>
@@ -91,14 +91,14 @@ const PendingApprovals = () => {
                   <td className="px-6 py-4 text-sm">
                     <div className="flex space-x-2">
                       <button
-                        onClick={() => handleApprove(user._id)}
+                        onClick={() => handleApprove(user.id)}
                         className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition flex items-center"
                       >
                         <Check className="w-4 h-4 mr-1" />
                         Approve
                       </button>
                       <button
-                        onClick={() => handleReject(user._id)}
+                        onClick={() => handleReject(user.id)}
                         className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition flex items-center"
                       >
                         <X className="w-4 h-4 mr-1" />

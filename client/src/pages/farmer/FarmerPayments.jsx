@@ -72,7 +72,7 @@ const FarmerPayments = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {payments.map((payment) => (
-                <tr key={payment._id} className="hover:bg-gray-50">
+                <tr key={payment.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-mono text-gray-900">{payment.transactionId}</td>
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">{payment.auction?.variety}</div>

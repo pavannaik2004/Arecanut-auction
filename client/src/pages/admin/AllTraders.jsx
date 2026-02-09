@@ -56,7 +56,7 @@ const AllTraders = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {traders.map((trader) => (
-                <tr key={trader._id} className="hover:bg-gray-50">
+                <tr key={trader.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mr-3">
