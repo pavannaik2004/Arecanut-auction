@@ -33,7 +33,7 @@ async function closeAuction(auctionId) {
       const transaction = await Transaction.create({
         auctionId,
         farmerId: auction.farmerId,
-        traderId: winningBid.trader.id,
+        traderId: winningBid.traderId,
         finalAmount: winningBid.amount,
         paymentStatus: "pending",
         transactionDate: new Date(),

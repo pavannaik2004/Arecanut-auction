@@ -1,9 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const  { Transaction, Auction, Bid, User }  = require('../models');
+const { Transaction, Auction, Bid, User } = require('../models');
 
 router.use(authMiddleware);
+
+const normalizePayment = (payment) => {
+  const data = payment.toJSON();
+  const normalizedStatus = data.paymentStatus === 'paid' ? 'completed' : data.paymentStatus;
+  return {
+    ...data,
+    amount: data.finalAmount,
+    status: normalizedStatus,
+    paymentDate: data.transactionDate,
+  };
+};
 
 // Create payment (Trader initiates)
 router.post('/create', async (req, res) => {
@@ -15,7 +26,7 @@ router.post('/create', async (req, res) => {
     }
 
     const auction = await Auction.findByPk(auctionId, {
-      include: [{ model: User, as: 'farmer' }]
+      include: [{ model: User, as: 'farmer' }],
     });
 
     if (!auction) {
@@ -69,9 +80,31 @@ router.post('/create', async (req, res) => {
         });
     }
 
-    res.status(201).json({ message: 'Payment initiated successfully', payment });
+    res.status(201).json({ message: 'Payment initiated successfully', payment: normalizePayment(payment) });
   } catch (error) {
     console.error('Error in create payment:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
+// Get payment by auction
+router.get('/auction/:id', async (req, res) => {
+  try {
+    const payment = await Transaction.findOne({
+      where: { auctionId: req.params.id },
+      include: [
+        { model: Auction, as: 'auction', attributes: ['variety', 'quantity', 'location', 'image'] },
+        { model: User, as: 'farmer', attributes: ['name', 'email'] },
+        { model: User, as: 'trader', attributes: ['name', 'email'] },
+      ],
+    });
+
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+
+    res.json(normalizePayment(payment));
+  } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
 });
@@ -86,13 +119,57 @@ router.get('/trader/:id', async (req, res) => {
     const payments = await Transaction.findAll({
       where: { traderId: req.params.id },
       include: [
-        { model: Auction, as: 'auction', attributes: ['variety', 'quantity'] },
+        { model: Auction, as: 'auction', attributes: ['variety', 'quantity', 'location', 'image'] },
         { model: User, as: 'farmer', attributes: ['name', 'email'] }
       ],
       order: [['createdAt', 'DESC']]
     });
 
-    res.json(payments);
+    res.json(payments.map(normalizePayment));
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
+// Get payments for current trader
+router.get('/trader/my-payments', async (req, res) => {
+  try {
+    if (req.user.role !== 'trader') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const payments = await Transaction.findAll({
+      where: { traderId: req.user.id },
+      include: [
+        { model: Auction, as: 'auction', attributes: ['variety', 'quantity', 'location', 'image'] },
+        { model: User, as: 'farmer', attributes: ['name', 'email'] },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json(payments.map(normalizePayment));
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
+// Get pending payments for current trader
+router.get('/trader/pending-payments', async (req, res) => {
+  try {
+    if (req.user.role !== 'trader') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const payments = await Transaction.findAll({
+      where: { traderId: req.user.id, paymentStatus: 'pending' },
+      include: [
+        { model: Auction, as: 'auction', attributes: ['variety', 'quantity', 'location', 'image'] },
+        { model: User, as: 'farmer', attributes: ['name', 'email'] },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json(payments.map(normalizePayment));
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
@@ -108,13 +185,79 @@ router.get('/farmer/:id', async (req, res) => {
     const payments = await Transaction.findAll({
       where: { farmerId: req.params.id },
       include: [
-        { model: Auction, as: 'auction', attributes: ['variety', 'quantity'] },
+        { model: Auction, as: 'auction', attributes: ['variety', 'quantity', 'location', 'image'] },
         { model: User, as: 'trader', attributes: ['name', 'email'] }
       ],
       order: [['createdAt', 'DESC']]
     });
 
-    res.json(payments);
+    res.json(payments.map(normalizePayment));
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
+// Get payments for current farmer
+router.get('/farmer/my-payments', async (req, res) => {
+  try {
+    if (req.user.role !== 'farmer') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const payments = await Transaction.findAll({
+      where: { farmerId: req.user.id },
+      include: [
+        { model: Auction, as: 'auction', attributes: ['variety', 'quantity', 'location', 'image'] },
+        { model: User, as: 'trader', attributes: ['name', 'email'] },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json(payments.map(normalizePayment));
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
+// Get pending payments for current farmer
+router.get('/farmer/pending-payments', async (req, res) => {
+  try {
+    if (req.user.role !== 'farmer') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const payments = await Transaction.findAll({
+      where: { farmerId: req.user.id, paymentStatus: 'pending' },
+      include: [
+        { model: Auction, as: 'auction', attributes: ['variety', 'quantity', 'location', 'image'] },
+        { model: User, as: 'trader', attributes: ['name', 'email'] },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json(payments.map(normalizePayment));
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+});
+
+// Mark payment as completed (Trader initiates, Admin allowed)
+router.put('/complete/:id', async (req, res) => {
+  try {
+    const payment = await Transaction.findByPk(req.params.id);
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found' });
+    }
+
+    if (req.user.role !== 'admin' && req.user.id !== payment.traderId) {
+      return res.status(403).json({ message: 'Not authorized to complete this payment' });
+    }
+
+    payment.paymentStatus = 'paid';
+    payment.transactionDate = new Date();
+    await payment.save();
+
+    res.json({ message: 'Payment completed', payment: normalizePayment(payment) });
   } catch (error) {
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
@@ -153,17 +296,40 @@ router.get('/all', async (req, res) => {
 
         const payments = await Transaction.findAll({
             include: [
-                { model: Auction, as: 'auction', attributes: ['variety', 'quantity'] },
+            { model: Auction, as: 'auction', attributes: ['variety', 'quantity', 'location', 'image'] },
                 { model: User, as: 'farmer', attributes: ['name'] },
                 { model: User, as: 'trader', attributes: ['name'] }
             ],
             order: [['createdAt', 'DESC']]
         });
-        res.json(payments);
+        res.json(payments.map(normalizePayment));
     } catch (error) {
         console.error('Error fetching all payments:', error);
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
+});
+
+// Admin alias for all payments (client expects this route)
+router.get('/admin/all-payments', async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin only.' });
+    }
+
+    const payments = await Transaction.findAll({
+      include: [
+        { model: Auction, as: 'auction', attributes: ['variety', 'quantity', 'location', 'image'] },
+        { model: User, as: 'farmer', attributes: ['name'] },
+        { model: User, as: 'trader', attributes: ['name'] },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+
+    res.json(payments.map(normalizePayment));
+  } catch (error) {
+    console.error('Error fetching all payments:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
 });
 
 module.exports = router;

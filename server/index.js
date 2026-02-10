@@ -68,6 +68,7 @@ const authRoutes = require("./routes/authRoutes");
 const farmerRoutes = require("./routes/farmerRoutes");
 const traderRoutes = require("./routes/traderRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 const statsRoutes = require("./routes/statsRoutes");
 
 // Rate limiting temporarily disabled for development
@@ -76,6 +77,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/farmer", farmerRoutes);
 app.use("/api/trader", traderRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/payment", paymentRoutes);
 app.use("/api/stats", statsRoutes);
 
 app.get("/", (req, res) => {
