@@ -38,7 +38,7 @@ const auctionSchema = Joi.object({
 
 // Bid Placement Validation
 const bidSchema = Joi.object({
-  auctionId: Joi.string().required().pattern(/^[0-9a-fA-F]{24}$/),
+  auctionId: Joi.number().integer().positive().required(),
   amount: Joi.number().required().min(1)
 });
 

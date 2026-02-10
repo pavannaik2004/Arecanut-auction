@@ -191,4 +191,4 @@
 - Auctions with "pending" status (existing auctions default to "active")
 - New Payment collection
 
-No migration script needed as Mongoose handles schema changes gracefully with defaults.
+Use Sequelize migrations or re-run the schema sync script after schema changes.

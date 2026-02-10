@@ -285,7 +285,7 @@ The **Arecanut APMC E‑Auction Platform** is designed as a realistic, academica
 
 By the end of this project, you will have:
 
-- A full‑stack MERN application demonstrating strong fundamentals.  
+- A full‑stack React/Node/Express/MySQL application demonstrating strong fundamentals.  
 - A clear story connecting **farmer problems**, **APMC context**, and **technical implementation**.  
 - Documentation (like this synopsis) that you can show to faculty during reviews and attach as part of your report.  
 - A project you can confidently put in your resume, explain in interviews, and extend later with ML, payments, and more.

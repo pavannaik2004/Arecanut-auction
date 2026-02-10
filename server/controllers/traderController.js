@@ -85,9 +85,12 @@ exports.placeBid = async (req, res) => {
       return res.status(400).json({ message: "Auction has ended" });
     }
 
-    if (amount <= auction.currentHighestBid || amount <= auction.basePrice) {
+    const baseBid = auction.currentHighestBid || auction.basePrice;
+    const minBid = Math.ceil((baseBid + 1) / 10) * 10;
+
+    if (amount < minBid) {
       return res.status(400).json({
-        message: "Bid must be higher than current highest bid and base price",
+        message: `Bid must be at least ₹${minBid}`,
       });
     }
 

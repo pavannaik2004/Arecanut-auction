@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const Auction = require("../models/Auction");
 const { deleteImage } = require("./uploadImage");
 
@@ -12,9 +13,11 @@ const cleanupOldImages = async (daysOld = 90) => {
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
     // Find auctions older than cutoff date with images
-    const oldAuctions = await Auction.find({
-      createdAt: { $lt: cutoffDate },
-      imagePublicId: { $exists: true, $ne: null },
+    const oldAuctions = await Auction.findAll({
+      where: {
+        createdAt: { [Op.lt]: cutoffDate },
+        imagePublicId: { [Op.not]: null },
+      },
     });
 
     console.log(
@@ -35,11 +38,11 @@ const cleanupOldImages = async (daysOld = 90) => {
         await auction.save();
 
         deletedCount++;
-        console.log(`Deleted image for auction ${auction._id}`);
+        console.log(`Deleted image for auction ${auction.id}`);
       } catch (error) {
         failedCount++;
         console.error(
-          `Failed to delete image for auction ${auction._id}:`,
+          `Failed to delete image for auction ${auction.id}:`,
           error.message
         );
       }
@@ -66,7 +69,7 @@ const cleanupOldImages = async (daysOld = 90) => {
  */
 const deleteAuctionImage = async (auctionId) => {
   try {
-    const auction = await Auction.findById(auctionId);
+    const auction = await Auction.findByPk(auctionId);
 
     if (auction && auction.imagePublicId) {
       await deleteImage(auction.imagePublicId);

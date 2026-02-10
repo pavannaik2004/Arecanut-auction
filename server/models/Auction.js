@@ -45,6 +45,10 @@ const Auction = sequelize.define(
       type: DataTypes.TEXT("long"), // Support for large image URLs or Base64 data
       allowNull: true,
     },
+    imagePublicId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     startTime: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,

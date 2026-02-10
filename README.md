@@ -1,6 +1,6 @@
 # Arecanut Auction Platform
 
-A comprehensive e-auction system for farmers and traders to simulate the APMC (Agricultural Produce Market Committee) bidding process. This project uses the **MERN Stack** (MongoDB, Express, React, Node.js).
+A comprehensive e-auction system for farmers and traders to simulate the APMC (Agricultural Produce Market Committee) bidding process. This project uses React, Node.js, Express, and MySQL.
 
 ## 🚀 Key Features
 
@@ -14,7 +14,7 @@ A comprehensive e-auction system for farmers and traders to simulate the APMC (A
 
 *   **Frontend**: React (Vite), Tailwind CSS, React Router
 *   **Backend**: Node.js, Express.js
-*   **Database**: MongoDB with Mongoose
+*   **Database**: MySQL with Sequelize
 *   **Auth**: JWT (JSON Web Tokens) with bcrypt
 *   **Additional**: Node-cron for scheduled tasks, Express Rate Limiting
 
@@ -31,7 +31,7 @@ A comprehensive e-auction system for farmers and traders to simulate the APMC (A
 │   └── public/
 ├── server/                 # Backend API
 │   ├── controllers/        # Route controllers
-│   ├── models/             # MongoDB models
+│   ├── models/             # Sequelize models
 │   ├── routes/             # API routes
 │   ├── middleware/         # Auth & validation middleware
 │   ├── services/           # Business logic (auction service)
@@ -43,7 +43,7 @@ A comprehensive e-auction system for farmers and traders to simulate the APMC (A
 
 ### Prerequisites
 *   Node.js (v16 or higher) installed
-*   MongoDB installed locally OR MongoDB Atlas account
+*   MySQL installed locally or a managed MySQL instance
 *   Git installed
 
 ### 1. Clone the Repository
@@ -58,14 +58,18 @@ Create a `.env` file in the `server/` directory:
 
 ```env
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/arecanut-auction
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=arecanut_auction
+DB_USER=root
+DB_PASSWORD=
 JWT_SECRET=your_jwt_secret_key_here
 NODE_ENV=development
 ```
 
-**For MongoDB Atlas:**
+**For Aiven MySQL:**
 ```env
-MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/arecanut-auction?retryWrites=true&w=majority
+AIVEN_SERVICE_URI=mysql://<username>:<password>@<host>:<port>/<db>?ssl-mode=REQUIRED
 ```
 
 ### 3. Install Dependencies
@@ -122,7 +126,7 @@ nodemon index.js
 
 *   **Frontend**: http://localhost:5173
 *   **Backend API**: http://localhost:5000
-*   **MongoDB**: mongodb://localhost:27017 (if local)
+*   **MySQL**: localhost:3306 (if local)
 
 ## 📖 How to Use
 
@@ -195,13 +199,13 @@ nodemon index.js
 
 ## 🐛 Troubleshooting
 
-### MongoDB Connection Issues
+### MySQL Connection Issues
 ```bash
-# Check if MongoDB is running (Windows)
-net start MongoDB
+# Check if MySQL is running (Windows)
+net start MySQL80
 
-# Check if MongoDB is running (Mac/Linux)
-sudo systemctl status mongod
+# Check if MySQL is running (Mac/Linux)
+sudo systemctl status mysql
 ```
 
 ### Port Already in Use

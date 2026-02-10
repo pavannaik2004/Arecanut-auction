@@ -112,7 +112,8 @@ const AuctionDetail = () => {
 
   if (!auction) return <div>Loading...</div>;
 
-  const minBid = (auction.currentHighestBid || auction.basePrice) + 1;
+  const baseBid = auction.currentHighestBid || auction.basePrice;
+  const minBid = Math.ceil((baseBid + 1) / 10) * 10;
 
   return (
     <div className="grid md:grid-cols-3 gap-8">
@@ -170,7 +171,7 @@ const AuctionDetail = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Your Bid Amount</label>
                     <div className="relative">
                          <span className="absolute left-3 top-2 text-gray-500">₹</span>
-                         <input 
+                        <input 
                             type="number" 
                             min={minBid}
                             step="10"
@@ -181,7 +182,7 @@ const AuctionDetail = () => {
                             required
                          />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Minimum bid: ₹{minBid} (in increments of ₹10)</p>
+                      <p className="text-xs text-gray-500 mt-1">Minimum bid: ₹{minBid} (multiples of ₹10)</p>
                 </div>
                 {error && <div className="text-red-500 text-sm">{error}</div>}
                 <button 
